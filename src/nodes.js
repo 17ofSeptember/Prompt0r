@@ -10,6 +10,9 @@ export const CATEGORIES = {
   custom:   { name: 'Custom',            color: '#6b7280', icon: '✨' }
 };
 
+// Must match GRID in canvas.js — node positions snap to this lattice.
+export const GRID_SNAP = 20;
+
 export const CATEGORY_ORDER = ['subject','lighting','color','style','camera','quality','custom'];
 
 export const NODE_REGISTRY = {
@@ -308,29 +311,42 @@ export const NODE_REGISTRY = {
 
 let _nodeCounter = 0;
 
+/**
+ * Build a node instance from a registry entry (or a user-authored custom
+ * definition) at the given canvas coordinates, snapped to the 20px grid.
+ * Returns null for an unknown type.
+ */
 export function createNode(type, x, y, customDef = null) {
   const def = customDef || NODE_REGISTRY[type];
   if (!def) { console.error(`Unknown node type: ${type}`); return null; }
+  if (!Array.isArray(def.fields) || def.fields.length === 0) {
+    console.error(`Node type "${type}" has no fields`);
+    return null;
+  }
 
   _nodeCounter++;
   const id = `node_${String(_nodeCounter).padStart(3, '0')}`;
 
+  // Deep-ish copy: value and options must not alias the shared registry entry,
+  // or editing one node would mutate every other node of the same type.
   const fields = def.fields.map(f => ({
     ...f,
-    value: Array.isArray(f.value) ? [...f.value] : f.value
+    value:   Array.isArray(f.value)   ? [...f.value]   : f.value,
+    ...(Array.isArray(f.options) ? { options: [...f.options] } : {})
   }));
 
   return {
     id,
-    type: customDef ? type : type,
+    type,
     category: def.category || 'custom',
     name: def.name,
     icon: def.icon || '✨',
-    x: Math.round(x / 20) * 20,
-    y: Math.round(y / 20) * 20,
+    x: Math.round(x / GRID_SNAP) * GRID_SNAP,
+    y: Math.round(y / GRID_SNAP) * GRID_SNAP,
     collapsed: false,
     fields
   };
 }
 
-export function setNodeCounter(n) { _nodeCounter = n; }
+/** Restore the auto-increment counter after loading a session or undoing. */
+export function setNodeCounter(n) { _nodeCounter = Number.isFinite(n) ? n : 0; }

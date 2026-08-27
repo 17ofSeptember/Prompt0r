@@ -862,40 +862,223 @@ body { display: flex; flex-direction: column; }
 /* Prevent select on all interactive node parts */
 .node-header, .node-name, .node-icon { user-select: none; }
 
-/* ── AD CONTAINER ─────────────────────────────────────────────────────────── */
+/* ── MOBILE / TOUCH ───────────────────────────────────────────────────────── */
 
-#ad-container {
-  position: fixed;
-  bottom: 16px;
-  left: 16px;
-  z-index: 1000;
-  width: 300px;
-  height: 250px;
-  background: #1a1a24;
-  border: 1px solid #2a2a38;
-  border-radius: 8px;
+/* Prevent browser pan/zoom on the canvas — we handle it ourselves */
+#canvas-wrapper { touch-action: none; }
+
+/* Default hint visibility */
+.hint-mobile  { display: none; }
+.hint-desktop { display: inline; }
+
+/* ── Input / form element touch fixes (applies everywhere, not just coarse) ── */
+/* font-size ≥ 16px prevents iOS Safari from auto-zooming the viewport on focus */
+.field-input,
+.field-textarea,
+.field-select {
+  font-size: 16px;
+  touch-action: auto;           /* let browser handle scroll/select inside inputs */
+  -webkit-user-select: text;
+  user-select: text;
+  pointer-events: auto;         /* never blocked by parent rules */
+}
+
+/* Larger tap targets on any touch-primary device */
+@media (pointer: coarse) {
+  .port { width: 18px; height: 18px; }
+  .port-input  { left:  -9px; }
+  .port-output { right: -9px; }
+
+  /* 44 × 44 px tap targets for delete/collapse — Apple HIG minimum */
+  .node-collapse-btn,
+  .node-delete-btn {
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Ensure these sit above any sibling/overlay within the header */
+    position: relative;
+    z-index: 2;
+  }
+
+  .field-input,
+  .field-select  { height: 44px; }
+  .field-textarea { min-height: 72px; }
+
+  .field-slider { height: 6px; }
+  .field-slider::-webkit-slider-thumb { width: 26px; height: 26px; }
+  .field-slider::-moz-range-thumb     { width: 26px; height: 26px; border: none; }
+
+  .toolbar-btn { height: 38px; }
+  .btn-random  { height: 44px; }
+}
+
+/* ── Responsive toolbar (<768 px) ─────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Hide desktop-only toolbar sections */
+  .toolbar-center { display: none; }
+  .zoom-controls  { display: none; }
+  #btn-fit        { display: none; }
+  #btn-custom-node { display: none; }
+  #btn-clear      { display: none; }
+  #btn-save       { display: none; }
+  #btn-load       { display: none; }
+  .toolbar-divider { display: none; }
+
+  /* Compact logo */
+  .logo-text { font-size: 14px; }
+  .logo-icon { font-size: 18px; }
+  .app-logo  { gap: 5px; }
+
+  /* Show the mobile-more button */
+  #btn-mobile-more { display: flex; }
+
+  /* Hint text swap */
+  .hint-desktop { display: none; }
+  .hint-mobile  { display: inline; }
+
+  /* Minimap: smaller and stay out of the way */
+  #minimap-container { bottom: 10px; right: 10px; }
+  #minimap { width: 150px; height: 110px; }
+
+  /* Ad container already has display:none at 600px; keep it hidden */
+}
+
+/* Keep mobile-more-btn hidden on desktop */
+@media (min-width: 768px) {
+  #btn-mobile-more  { display: none; }
+  #mobile-more-menu { display: none !important; }
+}
+
+/* ── Mobile More slide-down panel ─────────────────────────────────────────── */
+#mobile-more-menu {
+  position: relative;
+  z-index: 190;
+  background: #111118;
+  border-bottom: 1px solid var(--border-sub);
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  pointer-events: auto;
-}
-
-#ad-label {
-  padding: 5px 10px 4px;
-  font-size: 9px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: #444;
-  border-bottom: 1px solid #2a2a38;
-  font-family: var(--font-ui);
+  gap: 8px;
   flex-shrink: 0;
 }
-
-#ad-slot {
+#mobile-more-menu .search-input { width: 100%; }
+.mobile-more-row {
+  display: flex;
+  gap: 8px;
+}
+.mobile-more-row .toolbar-btn {
   flex: 1;
-  overflow: hidden;
+  justify-content: center;
+  height: 40px;
+  font-size: 13px;
 }
 
-@media (max-width: 600px) {
-  #ad-container { display: none; }
+/* ── Context menu: bottom sheet on very small screens ─────────────────────── */
+@media (max-width: 480px) {
+  #context-menu {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    border-radius: 14px 14px 0 0;
+    max-height: 65vh;
+    min-width: unset;
+    padding: 8px 12px 20px;
+    overflow-y: auto;
+  }
+  /* Drag handle visual */
+  #context-menu::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--border-mid);
+    border-radius: 2px;
+    margin: 4px auto 10px;
+  }
+  .context-menu-item { padding: 10px 12px; font-size: 14px; }
+  .context-menu-category { padding: 8px 12px 4px; font-size: 10px; }
 }
+
+/* ── ACCESSIBILITY UTILITIES ──────────────────────────────────────────────── */
+
+/* Visually hidden but still announced by screen readers. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A single, consistent focus ring for every interactive control. Uses
+   :focus-visible so mouse users never see it, but keyboard users always do. */
+.toolbar-btn:focus-visible,
+.modal-close:focus-visible,
+.btn-primary-large:focus-visible,
+.search-input:focus-visible,
+.form-input:focus-visible,
+.field-input:focus-visible,
+.field-textarea:focus-visible,
+.field-select:focus-visible,
+.field-slider:focus-visible,
+.btn-random:focus-visible,
+.custom-field-remove:focus-visible,
+.node-collapse-btn:focus-visible,
+.node-delete-btn:focus-visible,
+.dropdown-node-item:focus-visible,
+.context-menu-item:focus-visible,
+.json-display:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Honour the OS "reduce motion" setting. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── CUSTOM NODE MODAL LAYOUT ─────────────────────────────────────────────── */
+
+.custom-node-identity {
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  gap: 12px;
+}
+.custom-node-identity .form-group { margin-bottom: 0; }
+.custom-node-icon-input { text-align: center; font-size: 18px; }
+.custom-node-desc-group  { margin-top: 12px; }
+.custom-node-fields-group { margin-top: 4px; }
+.custom-add-field-btn     { margin-top: 8px; }
+
+/* Matches .form-group label, for non-label headings inside a group. */
+.form-group-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-lo);
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+  margin-bottom: 5px;
+}
+
+.custom-field-grow  { flex: 1; }
+.custom-field-type  { width: 120px; }
+.custom-field-item .custom-field-grow .form-group,
+.custom-field-item .custom-field-type .form-group { margin-bottom: 0; }
+.custom-field-remove { margin-top: 20px; }
+.cf-extra-options { display: none; }
+.cf-extra-options.visible { display: flex; }

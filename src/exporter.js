@@ -1,5 +1,8 @@
 // exporter.js — JSON export, prompt string assembly, download
 
+/** Schema version of the exported document. Bump on breaking format changes. */
+export const EXPORT_FORMAT_VERSION = '1.0';
+
 export function exportJSON() {
   const { nodes } = window.AppState;
 
@@ -21,7 +24,7 @@ export function exportJSON() {
   };
 
   const output = {
-    promptforge_version: '1.0',
+    promptforge_version: EXPORT_FORMAT_VERSION,
     created_at: new Date().toISOString(),
     workflow_name: 'My Image Prompt',
     nodes: nodes.map(node => ({
@@ -164,8 +167,14 @@ export function downloadJSON(data, filename) {
   const a    = document.createElement('a');
   a.href     = url;
   a.download = filename;
+  a.rel      = 'noopener';
+  a.style.display = 'none';
+  // Firefox ignores a click on an anchor that is not in the document, and
+  // revoking the URL synchronously can cancel the download mid-flight.
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 // ── Syntax Highlight ──────────────────────────────────────────────────────────

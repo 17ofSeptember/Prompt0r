@@ -1,0 +1,19 @@
+{
+  "name": "promptforge",
+  "version": "1.0.0",
+  "description": "Visual node-based builder for structured AI image-generation prompts. Runs entirely in the browser.",
+  "keywords": ["ai", "prompt", "image-generation", "stable-diffusion", "node-editor", "canvas", "static-site"],
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes serve@14 . -l 3000",
+    "start": "npm run dev"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "browserslist": [
+    "defaults and supports es6-module"
+  ]
+}

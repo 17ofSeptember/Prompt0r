@@ -2,178 +2,201 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- Defence in depth. The deployed host should also send these as real headers
+       (see _headers). No inline <script> is used anywhere, so 'self' is enough.
+       frame-ancestors is deliberately absent: browsers ignore it in a <meta>
+       CSP, so clickjacking protection is set as a real header in _headers. -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self';
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' data:;
+    connect-src 'self';
+    object-src 'none';
+    base-uri 'none';
+    form-action 'none'">
+
   <title>PromptForge — Visual AI Prompt Builder</title>
+  <meta name="description" content="Build rich, structured AI image-generation prompts with a visual node graph. Runs entirely in your browser — no account, no upload, no server.">
+  <meta name="theme-color" content="#0f0f13">
+  <meta name="color-scheme" content="dark">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="PromptForge — Visual AI Prompt Builder">
+  <meta property="og:description" content="Build rich, structured AI image-generation prompts with a visual node graph. Runs entirely in your browser.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PromptForge — Visual AI Prompt Builder">
+  <meta name="twitter:description" content="Build rich, structured AI image-generation prompts with a visual node graph.">
+
+  <!-- Inline SVG favicon: no extra request, no 404 on first load. -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f0f13'/%3E%3Cpath d='M18.5 4 8 18h6l-1.5 10L23 14h-6z' fill='%2300e5ff'/%3E%3C/svg%3E">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
 
   <!-- ── TOOLBAR ─────────────────────────────────────────────────────────── -->
-  <div id="toolbar">
+  <header id="toolbar">
     <div class="toolbar-left">
       <div class="app-logo">
-        <span class="logo-icon">⚡</span>
+        <span class="logo-icon" aria-hidden="true">⚡</span>
         <span class="logo-text">PromptForge</span>
       </div>
-      <div class="toolbar-divider"></div>
-      <div class="zoom-controls">
-        <button id="btn-zoom-out" class="toolbar-btn" title="Zoom Out (Ctrl+-)">−</button>
-        <span id="zoom-display" class="zoom-display">100%</span>
-        <button id="btn-zoom-in"  class="toolbar-btn" title="Zoom In (Ctrl++)">+</button>
+      <div class="toolbar-divider" aria-hidden="true"></div>
+      <div class="zoom-controls" role="group" aria-label="Zoom">
+        <button id="btn-zoom-out" class="toolbar-btn" type="button" aria-label="Zoom out" title="Zoom Out">−</button>
+        <span id="zoom-display" class="zoom-display" aria-live="polite">100%</span>
+        <button id="btn-zoom-in"  class="toolbar-btn" type="button" aria-label="Zoom in" title="Zoom In">+</button>
       </div>
-      <button id="btn-fit" class="toolbar-btn" title="Fit all nodes to screen">⊞ Fit</button>
+      <button id="btn-fit" class="toolbar-btn" type="button" title="Fit all nodes to screen (F)"><span aria-hidden="true">⊞</span> Fit</button>
     </div>
 
     <div class="toolbar-center">
-      <input type="text" id="search-input" class="search-input" placeholder="🔍  Search nodes by name…">
+      <label class="sr-only" for="search-input">Search nodes by name</label>
+      <input type="search" id="search-input" class="search-input" placeholder="🔍  Search nodes by name…" autocomplete="off">
     </div>
 
     <div class="toolbar-right">
       <div class="dropdown-wrapper">
-        <button id="btn-add-node" class="toolbar-btn" title="Add a node to the canvas">＋ Add Node</button>
-        <div id="add-node-menu" class="dropdown-menu hidden"></div>
+        <button id="btn-add-node" class="toolbar-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="add-node-menu" title="Add a node to the canvas"><span aria-hidden="true">＋</span> Add Node</button>
+        <div id="add-node-menu" class="dropdown-menu hidden" role="menu" aria-label="Add node"></div>
       </div>
-      <button id="btn-custom-node" class="toolbar-btn" title="Create a custom node">✦ Custom</button>
-      <div class="toolbar-divider"></div>
-      <button id="btn-clear" class="toolbar-btn toolbar-btn-danger" title="Clear all nodes">⊗ Clear</button>
-      <button id="btn-save"  class="toolbar-btn" title="Save session (Ctrl+S)">💾 Save</button>
-      <button id="btn-load"  class="toolbar-btn" title="Load saved session">📂 Load</button>
-      <button id="btn-export" class="toolbar-btn toolbar-btn-primary" title="Export prompt as JSON (Ctrl+E)">⬇ Export JSON</button>
-      <button id="btn-mobile-more" class="toolbar-btn" title="More options">⋮</button>
+      <button id="btn-custom-node" class="toolbar-btn" type="button" title="Create a custom node"><span aria-hidden="true">✦</span> Custom</button>
+      <div class="toolbar-divider" aria-hidden="true"></div>
+      <button id="btn-clear" class="toolbar-btn toolbar-btn-danger" type="button" title="Clear all nodes"><span aria-hidden="true">⊗</span> Clear</button>
+      <button id="btn-save"  class="toolbar-btn" type="button" title="Save session (Ctrl+S)"><span aria-hidden="true">💾</span> Save</button>
+      <button id="btn-load"  class="toolbar-btn" type="button" title="Load saved session"><span aria-hidden="true">📂</span> Load</button>
+      <button id="btn-export" class="toolbar-btn toolbar-btn-primary" type="button" title="Export prompt as JSON (Ctrl+E)"><span aria-hidden="true">⬇</span> Export JSON</button>
+      <button id="btn-mobile-more" class="toolbar-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="mobile-more-menu" aria-label="More options" title="More options">⋮</button>
     </div>
-  </div>
+  </header>
 
   <!-- Mobile slide-down panel (hidden on desktop) -->
   <div id="mobile-more-menu" class="hidden">
-    <input type="text" id="mobile-search" class="search-input" placeholder="🔍  Search nodes…">
+    <label class="sr-only" for="mobile-search">Search nodes</label>
+    <input type="search" id="mobile-search" class="search-input" placeholder="🔍  Search nodes…" autocomplete="off">
     <div class="mobile-more-row">
-      <button class="toolbar-btn" id="mob-btn-fit">⊞ Fit</button>
-      <button class="toolbar-btn" id="mob-btn-save">💾 Save</button>
-      <button class="toolbar-btn" id="mob-btn-load">📂 Load</button>
+      <button class="toolbar-btn" type="button" id="mob-btn-fit"><span aria-hidden="true">⊞</span> Fit</button>
+      <button class="toolbar-btn" type="button" id="mob-btn-save"><span aria-hidden="true">💾</span> Save</button>
+      <button class="toolbar-btn" type="button" id="mob-btn-load"><span aria-hidden="true">📂</span> Load</button>
     </div>
     <div class="mobile-more-row">
-      <button class="toolbar-btn" id="mob-btn-custom">✦ Custom</button>
-      <button class="toolbar-btn toolbar-btn-danger" id="mob-btn-clear">⊗ Clear</button>
+      <button class="toolbar-btn" type="button" id="mob-btn-custom"><span aria-hidden="true">✦</span> Custom</button>
+      <button class="toolbar-btn toolbar-btn-danger" type="button" id="mob-btn-clear"><span aria-hidden="true">⊗</span> Clear</button>
     </div>
   </div>
 
   <!-- ── CANVAS ──────────────────────────────────────────────────────────── -->
-  <div id="canvas-wrapper">
+  <main id="canvas-wrapper" aria-label="Node canvas">
     <div id="canvas-world">
-      <svg id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      <svg id="connections-svg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
     </div>
     <div id="canvas-empty-hint" class="canvas-empty-hint">
       <span class="hint-desktop">Right-click the canvas or use <strong>Add Node</strong> in the toolbar to place your first node</span>
       <span class="hint-mobile">Tap <strong>+ Add Node</strong> or long-press the canvas to place your first node</span>
     </div>
-    <div id="canvas-coords" class="canvas-coords">x: 0, y: 0</div>
-  </div>
+    <div id="canvas-coords" class="canvas-coords" aria-hidden="true">x: 0, y: 0</div>
+  </main>
 
   <!-- ── MINI-MAP ─────────────────────────────────────────────────────────── -->
   <div id="minimap-container" title="Click to navigate">
-    <canvas id="minimap" width="200" height="140"></canvas>
+    <canvas id="minimap" width="200" height="140" aria-label="Canvas minimap"></canvas>
   </div>
 
   <!-- ── CONTEXT MENU ─────────────────────────────────────────────────────── -->
-  <div id="context-menu" class="hidden"></div>
+  <div id="context-menu" class="hidden" role="menu" aria-label="Add node"></div>
 
   <!-- ── TOAST CONTAINER ──────────────────────────────────────────────────── -->
-  <div id="toast-container"></div>
+  <div id="toast-container" role="status" aria-live="polite"></div>
 
   <!-- ── WELCOME OVERLAY ──────────────────────────────────────────────────── -->
-  <div id="welcome-overlay">
+  <div id="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
     <div class="welcome-card">
-      <div class="welcome-logo">⚡ PromptForge</div>
-      <h1>Visual AI Prompt Builder</h1>
+      <div class="welcome-logo"><span aria-hidden="true">⚡</span> PromptForge</div>
+      <h1 id="welcome-title">Visual AI Prompt Builder</h1>
       <p>Construct rich, structured image generation prompts using a visual node-based workflow. Each node controls one aspect of your final image.</p>
       <div class="welcome-steps">
         <div class="welcome-step">
-          <div class="step-num">1</div>
+          <div class="step-num" aria-hidden="true">1</div>
           <div class="step-text">
             <strong>Add Nodes</strong> — Right-click the canvas or use the <em>Add Node</em> button in the toolbar. Nodes are organised by category.
           </div>
         </div>
         <div class="welcome-step">
-          <div class="step-num">2</div>
+          <div class="step-num" aria-hidden="true">2</div>
           <div class="step-text">
             <strong>Configure</strong> — Fill in each node's fields to describe your image. Drag nodes to rearrange, connect ports to group related nodes visually.
           </div>
         </div>
         <div class="welcome-step">
-          <div class="step-num">3</div>
+          <div class="step-num" aria-hidden="true">3</div>
           <div class="step-text">
             <strong>Export</strong> — Click <em>Export JSON</em> to get a structured prompt file ready for any AI image generator. Copy or download it.
           </div>
         </div>
       </div>
-      <button id="btn-start" class="btn-primary-large">Start Building →</button>
+      <button id="btn-start" class="btn-primary-large" type="button">Start Building →</button>
     </div>
   </div>
 
   <!-- ── EXPORT MODAL ─────────────────────────────────────────────────────── -->
-  <div id="export-modal" class="modal-overlay hidden">
+  <div id="export-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
     <div class="modal">
       <div class="modal-header">
-        <h2>⬇ Export JSON</h2>
-        <button class="modal-close" id="btn-close-export" title="Close">×</button>
+        <h2 id="export-modal-title"><span aria-hidden="true">⬇</span> Export JSON</h2>
+        <button class="modal-close" id="btn-close-export" type="button" aria-label="Close" title="Close">×</button>
       </div>
       <div class="modal-body">
-        <pre id="export-json-display" class="json-display"></pre>
+        <pre id="export-json-display" class="json-display" tabindex="0"></pre>
       </div>
       <div class="modal-footer">
-        <button id="btn-copy-json"     class="toolbar-btn">📋 Copy to Clipboard</button>
-        <button id="btn-download-json" class="toolbar-btn toolbar-btn-primary">⬇ Download .json</button>
+        <button id="btn-copy-json"     class="toolbar-btn" type="button"><span aria-hidden="true">📋</span> Copy to Clipboard</button>
+        <button id="btn-download-json" class="toolbar-btn toolbar-btn-primary" type="button"><span aria-hidden="true">⬇</span> Download .json</button>
       </div>
     </div>
   </div>
 
   <!-- ── CUSTOM NODE MODAL ─────────────────────────────────────────────────── -->
-  <div id="custom-node-modal" class="modal-overlay hidden">
+  <div id="custom-node-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="custom-modal-title">
     <div class="modal modal-wide">
       <div class="modal-header">
-        <h2>✦ Create Custom Node</h2>
-        <button class="modal-close" id="btn-close-custom" title="Close">×</button>
+        <h2 id="custom-modal-title"><span aria-hidden="true">✦</span> Create Custom Node</h2>
+        <button class="modal-close" id="btn-close-custom" type="button" aria-label="Close" title="Close">×</button>
       </div>
       <div class="modal-body">
-        <div style="display:grid;grid-template-columns:1fr 80px;gap:12px;">
-          <div class="form-group" style="margin:0">
-            <label>Node Name</label>
-            <input type="text" id="custom-node-name" class="form-input" placeholder="My Custom Node">
+        <div class="custom-node-identity">
+          <div class="form-group">
+            <label for="custom-node-name">Node Name</label>
+            <input type="text" id="custom-node-name" class="form-input" placeholder="My Custom Node" maxlength="60">
           </div>
-          <div class="form-group" style="margin:0">
-            <label>Icon</label>
-            <input type="text" id="custom-node-icon" class="form-input" placeholder="🎯" maxlength="2" style="text-align:center;font-size:18px;">
+          <div class="form-group">
+            <label for="custom-node-icon">Icon</label>
+            <input type="text" id="custom-node-icon" class="form-input custom-node-icon-input" placeholder="🎯" maxlength="2">
           </div>
         </div>
-        <div class="form-group" style="margin-top:12px">
-          <label>Description</label>
-          <input type="text" id="custom-node-desc" class="form-input" placeholder="What does this node control?">
+        <div class="form-group custom-node-desc-group">
+          <label for="custom-node-desc">Description</label>
+          <input type="text" id="custom-node-desc" class="form-input" placeholder="What does this node control?" maxlength="140">
         </div>
 
-        <div class="form-group" style="margin-top:4px">
-          <label>Fields</label>
+        <div class="form-group custom-node-fields-group">
+          <span class="form-group-label">Fields</span>
           <div id="custom-fields-list"></div>
-          <button id="btn-add-field" class="toolbar-btn" style="margin-top:8px">＋ Add Field</button>
+          <button id="btn-add-field" class="toolbar-btn custom-add-field-btn" type="button"><span aria-hidden="true">＋</span> Add Field</button>
         </div>
       </div>
       <div class="modal-footer">
-        <button id="btn-save-custom" class="toolbar-btn toolbar-btn-primary">💾 Save Node</button>
+        <button id="btn-save-custom" class="toolbar-btn toolbar-btn-primary" type="button"><span aria-hidden="true">💾</span> Save Node</button>
       </div>
     </div>
   </div>
 
-  <!-- ── AD CONTAINER (fixed, outside canvas) ──────────────────────────────── -->
-  <div id="ad-container">
-    <div id="ad-label">Advertisement</div>
-    <div id="ad-slot">
-      <script async="async" data-cfasync="false" src="https://wistfulseverely.com/1f9473cd953f4346ad2b75f3900ef72b/invoke.js"></script>
-      <div id="container-1f9473cd953f4346ad2b75f3900ef72b"></div>
-    </div>
-  </div>
-
-  <script type="module" src="app.js"></script>
+  <script type="module" src="src/app.js"></script>
 </body>
 </html>
