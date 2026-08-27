@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptForge — Visual AI Prompt Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── TOOLBAR ─────────────────────────────────────────────────────────── -->
+  <div id="toolbar">
+    <div class="toolbar-left">
+      <div class="app-logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">PromptForge</span>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div class="zoom-controls">
+        <button id="btn-zoom-out" class="toolbar-btn" title="Zoom Out (Ctrl+-)">−</button>
+        <span id="zoom-display" class="zoom-display">100%</span>
+        <button id="btn-zoom-in"  class="toolbar-btn" title="Zoom In (Ctrl++)">+</button>
+      </div>
+      <button id="btn-fit" class="toolbar-btn" title="Fit all nodes to screen">⊞ Fit</button>
+    </div>
+
+    <div class="toolbar-center">
+      <input type="text" id="search-input" class="search-input" placeholder="🔍  Search nodes by name…">
+    </div>
+
+    <div class="toolbar-right">
+      <div class="dropdown-wrapper">
+        <button id="btn-add-node" class="toolbar-btn" title="Add a node to the canvas">＋ Add Node</button>
+        <div id="add-node-menu" class="dropdown-menu hidden"></div>
+      </div>
+      <button id="btn-custom-node" class="toolbar-btn" title="Create a custom node">✦ Custom</button>
+      <div class="toolbar-divider"></div>
+      <button id="btn-clear" class="toolbar-btn toolbar-btn-danger" title="Clear all nodes">⊗ Clear</button>
+      <button id="btn-save"  class="toolbar-btn" title="Save session (Ctrl+S)">💾 Save</button>
+      <button id="btn-load"  class="toolbar-btn" title="Load saved session">📂 Load</button>
+      <button id="btn-export" class="toolbar-btn toolbar-btn-primary" title="Export prompt as JSON (Ctrl+E)">⬇ Export JSON</button>
+    </div>
+  </div>
+
+  <!-- ── CANVAS ──────────────────────────────────────────────────────────── -->
+  <div id="canvas-wrapper">
+    <div id="canvas-world">
+      <svg id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div id="canvas-empty-hint" class="canvas-empty-hint">
+      Right-click the canvas or use <strong>Add Node</strong> in the toolbar<br>to place your first node
+    </div>
+    <div id="canvas-coords" class="canvas-coords">x: 0, y: 0</div>
+  </div>
+
+  <!-- ── MINI-MAP ─────────────────────────────────────────────────────────── -->
+  <div id="minimap-container" title="Click to navigate">
+    <canvas id="minimap" width="200" height="140"></canvas>
+  </div>
+
+  <!-- ── CONTEXT MENU ─────────────────────────────────────────────────────── -->
+  <div id="context-menu" class="hidden"></div>
+
+  <!-- ── TOAST CONTAINER ──────────────────────────────────────────────────── -->
+  <div id="toast-container"></div>
+
+  <!-- ── WELCOME OVERLAY ──────────────────────────────────────────────────── -->
+  <div id="welcome-overlay">
+    <div class="welcome-card">
+      <div class="welcome-logo">⚡ PromptForge</div>
+      <h1>Visual AI Prompt Builder</h1>
+      <p>Construct rich, structured image generation prompts using a visual node-based workflow. Each node controls one aspect of your final image.</p>
+      <div class="welcome-steps">
+        <div class="welcome-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Add Nodes</strong> — Right-click the canvas or use the <em>Add Node</em> button in the toolbar. Nodes are organised by category.
+          </div>
+        </div>
+        <div class="welcome-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Configure</strong> — Fill in each node's fields to describe your image. Drag nodes to rearrange, connect ports to group related nodes visually.
+          </div>
+        </div>
+        <div class="welcome-step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Export</strong> — Click <em>Export JSON</em> to get a structured prompt file ready for any AI image generator. Copy or download it.
+          </div>
+        </div>
+      </div>
+      <button id="btn-start" class="btn-primary-large">Start Building →</button>
+    </div>
+  </div>
+
+  <!-- ── EXPORT MODAL ─────────────────────────────────────────────────────── -->
+  <div id="export-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>⬇ Export JSON</h2>
+        <button class="modal-close" id="btn-close-export" title="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <pre id="export-json-display" class="json-display"></pre>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-copy-json"     class="toolbar-btn">📋 Copy to Clipboard</button>
+        <button id="btn-download-json" class="toolbar-btn toolbar-btn-primary">⬇ Download .json</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CUSTOM NODE MODAL ─────────────────────────────────────────────────── -->
+  <div id="custom-node-modal" class="modal-overlay hidden">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h2>✦ Create Custom Node</h2>
+        <button class="modal-close" id="btn-close-custom" title="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 80px;gap:12px;">
+          <div class="form-group" style="margin:0">
+            <label>Node Name</label>
+            <input type="text" id="custom-node-name" class="form-input" placeholder="My Custom Node">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Icon</label>
+            <input type="text" id="custom-node-icon" class="form-input" placeholder="🎯" maxlength="2" style="text-align:center;font-size:18px;">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label>Description</label>
+          <input type="text" id="custom-node-desc" class="form-input" placeholder="What does this node control?">
+        </div>
+
+        <div class="form-group" style="margin-top:4px">
+          <label>Fields</label>
+          <div id="custom-fields-list"></div>
+          <button id="btn-add-field" class="toolbar-btn" style="margin-top:8px">＋ Add Field</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-save-custom" class="toolbar-btn toolbar-btn-primary">💾 Save Node</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
