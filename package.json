@@ -1,9 +1,17 @@
 {
-  "name": "promptforge",
+  "name": "prompt0r",
   "version": "1.0.0",
   "description": "Visual node-based builder for structured AI image-generation prompts. Runs entirely in the browser.",
-  "keywords": ["ai", "prompt", "image-generation", "stable-diffusion", "node-editor", "canvas", "static-site"],
-  "license": "MIT",
+  "keywords": [
+    "ai",
+    "prompt",
+    "image-generation",
+    "stable-diffusion",
+    "node-editor",
+    "canvas",
+    "static-site"
+  ],
+  "license": "AGPL-3.0-or-later",
   "private": false,
   "type": "module",
   "scripts": {
@@ -15,5 +23,14 @@
   },
   "browserslist": [
     "defaults and supports es6-module"
-  ]
+  ],
+  "author": "17OfSeptember (https://github.com/17ofSeptember)",
+  "homepage": "https://github.com/17ofSeptember/prompt0r#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/17ofSeptember/prompt0r.git"
+  },
+  "bugs": {
+    "url": "https://github.com/17ofSeptember/prompt0r/issues"
+  }
 }

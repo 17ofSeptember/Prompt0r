@@ -24,7 +24,7 @@ export function exportJSON() {
   };
 
   const output = {
-    promptforge_version: EXPORT_FORMAT_VERSION,
+    prompt0r_version: EXPORT_FORMAT_VERSION,
     created_at: new Date().toISOString(),
     workflow_name: 'My Image Prompt',
     nodes: nodes.map(node => ({
@@ -46,7 +46,7 @@ export function exportJSON() {
 
   // Store for download
   window._lastExportData = output;
-  window.promptForge.showToast('JSON ready — copy or download below', 'success');
+  window.prompt0r.showToast('JSON ready — copy or download below', 'success');
 }
 
 export function assemblePromptString(nodes) {

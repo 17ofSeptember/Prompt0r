@@ -19,16 +19,16 @@
     base-uri 'none';
     form-action 'none'">
 
-  <title>PromptForge — Visual AI Prompt Builder</title>
-  <meta name="description" content="Build rich, structured AI image-generation prompts with a visual node graph. Runs entirely in your browser — no account, no upload, no server.">
+  <title>Prompt0r - Visual AI Prompt Builder</title>
+  <meta name="description" content="Build rich, structured AI image-generation prompts with a visual node graph. Runs entirely in your browser, with no account, no upload, and no server.">
   <meta name="theme-color" content="#0f0f13">
   <meta name="color-scheme" content="dark">
 
   <meta property="og:type" content="website">
-  <meta property="og:title" content="PromptForge — Visual AI Prompt Builder">
+  <meta property="og:title" content="Prompt0r - Visual AI Prompt Builder">
   <meta property="og:description" content="Build rich, structured AI image-generation prompts with a visual node graph. Runs entirely in your browser.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="PromptForge — Visual AI Prompt Builder">
+  <meta name="twitter:title" content="Prompt0r - Visual AI Prompt Builder">
   <meta name="twitter:description" content="Build rich, structured AI image-generation prompts with a visual node graph.">
 
   <!-- Inline SVG favicon: no extra request, no 404 on first load. -->
@@ -46,7 +46,7 @@
     <div class="toolbar-left">
       <div class="app-logo">
         <span class="logo-icon" aria-hidden="true">⚡</span>
-        <span class="logo-text">PromptForge</span>
+        <span class="logo-text">Prompt<span class="brand-zero">0</span>r</span>
       </div>
       <div class="toolbar-divider" aria-hidden="true"></div>
       <div class="zoom-controls" role="group" aria-label="Zoom">
@@ -55,6 +55,7 @@
         <button id="btn-zoom-in"  class="toolbar-btn" type="button" aria-label="Zoom in" title="Zoom In">+</button>
       </div>
       <button id="btn-fit" class="toolbar-btn" type="button" title="Fit all nodes to screen (F)"><span aria-hidden="true">⊞</span> Fit</button>
+      <button id="btn-about" class="toolbar-btn toolbar-btn-icon" type="button" aria-label="About Prompt0r" title="About Prompt0r">ⓘ</button>
     </div>
 
     <div class="toolbar-center">
@@ -90,6 +91,9 @@
       <button class="toolbar-btn" type="button" id="mob-btn-custom"><span aria-hidden="true">✦</span> Custom</button>
       <button class="toolbar-btn toolbar-btn-danger" type="button" id="mob-btn-clear"><span aria-hidden="true">⊗</span> Clear</button>
     </div>
+    <div class="mobile-more-row">
+      <button class="toolbar-btn" type="button" id="mob-btn-about"><span aria-hidden="true">ⓘ</span> About</button>
+    </div>
   </div>
 
   <!-- ── CANVAS ──────────────────────────────────────────────────────────── -->
@@ -118,7 +122,7 @@
   <!-- ── WELCOME OVERLAY ──────────────────────────────────────────────────── -->
   <div id="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
     <div class="welcome-card">
-      <div class="welcome-logo"><span aria-hidden="true">⚡</span> PromptForge</div>
+      <div class="welcome-logo"><span aria-hidden="true">⚡</span> Prompt<span class="brand-zero">0</span>r</div>
       <h1 id="welcome-title">Visual AI Prompt Builder</h1>
       <p>Construct rich, structured image generation prompts using a visual node-based workflow. Each node controls one aspect of your final image.</p>
       <div class="welcome-steps">
@@ -142,6 +146,9 @@
         </div>
       </div>
       <button id="btn-start" class="btn-primary-large" type="button">Start Building →</button>
+      <p class="welcome-credit">
+        Created by <a href="https://github.com/17ofSeptember" target="_blank" rel="noopener noreferrer">17OfSeptember</a>
+      </p>
     </div>
   </div>
 
@@ -193,6 +200,43 @@
       </div>
       <div class="modal-footer">
         <button id="btn-save-custom" class="toolbar-btn toolbar-btn-primary" type="button"><span aria-hidden="true">💾</span> Save Node</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ABOUT MODAL ───────────────────────────────────────────────────────── -->
+  <div id="about-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="about-modal-title"><span aria-hidden="true">ⓘ</span> About</h2>
+        <button class="modal-close" id="btn-close-about" type="button" aria-label="Close" title="Close">×</button>
+      </div>
+      <div class="modal-body about-body">
+        <div class="about-logo"><span aria-hidden="true">⚡</span> Prompt<span class="brand-zero">0</span>r</div>
+        <p class="about-tagline">Visual AI Prompt Builder</p>
+        <p class="about-version">Version <span id="about-version">1.0.0</span></p>
+
+        <p class="about-blurb">
+          Build rich, structured image generation prompts on a node canvas, then export
+          them as JSON for any AI image generator. Everything runs in your browser. Your
+          work is stored locally and never leaves your machine.
+        </p>
+
+        <div class="about-credit">
+          <span class="about-credit-label">Created by</span>
+          <a class="about-link" href="https://github.com/17ofSeptember" target="_blank" rel="noopener noreferrer">
+            17OfSeptember
+          </a>
+          <a class="about-link about-link-url" href="https://github.com/17ofSeptember" target="_blank" rel="noopener noreferrer">
+            https://github.com/17ofSeptember
+          </a>
+        </div>
+
+        <p class="about-license">
+          Free to use, edit, and share under the
+          <a class="about-link" href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">GNU AGPL v3</a>.
+          Derivatives must stay open source.
+        </p>
       </div>
     </div>
   </div>

@@ -320,8 +320,8 @@ export function addNodeToCanvas(type, cx, cy, customDef = null) {
   updateConnections();
   updateMinimap();
   updateEmptyHint();
-  window.promptForge.pushHistory();
-  window.promptForge.showToast(`Added: ${node.name}`, 'success');
+  window.prompt0r.pushHistory();
+  window.prompt0r.showToast(`Added: ${node.name}`, 'success');
 }
 
 export function deleteNode(id) {
@@ -333,7 +333,7 @@ export function deleteNode(id) {
   updateConnections();
   updateMinimap();
   updateEmptyHint();
-  window.promptForge.pushHistory();
+  window.prompt0r.pushHistory();
 }
 
 export function selectNode(id) {
@@ -384,7 +384,7 @@ export function updateConnections() {
     path.addEventListener('click', () => {
       window.AppState.connections = window.AppState.connections.filter(c => c.id !== conn.id);
       updateConnections();
-      window.promptForge.pushHistory();
+      window.prompt0r.pushHistory();
     });
     path.style.pointerEvents = 'stroke';
     connectionsSvg.insertBefore(path, connectionsSvg.firstChild);
@@ -800,7 +800,7 @@ function _onMouseUp(e) {
 
   if (dragState.type === 'node') {
     document.body.classList.remove('dragging');
-    window.promptForge.pushHistory();
+    window.prompt0r.pushHistory();
   }
 
   else if (dragState.type === 'canvas') {
@@ -817,7 +817,7 @@ function _onMouseUp(e) {
         const dup = window.AppState.connections.some(c => c.from === dragState.fromNodeId && c.to === toNodeId);
         if (!dup) {
           window.AppState.connections.push({ id: `conn_${Date.now()}`, from: dragState.fromNodeId, to: toNodeId });
-          window.promptForge.pushHistory();
+          window.prompt0r.pushHistory();
         }
       }
     }
@@ -1009,7 +1009,7 @@ function _onTouchEnd(e) {
           const dup = window.AppState.connections.some(c => c.from === dragState.fromNodeId && c.to === toId);
           if (!dup) {
             window.AppState.connections.push({ id: `conn_${Date.now()}`, from: dragState.fromNodeId, to: toId });
-            window.promptForge.pushHistory();
+            window.prompt0r.pushHistory();
           }
         }
       }
@@ -1019,7 +1019,7 @@ function _onTouchEnd(e) {
 
   else if (dragState.type === 'node') {
     document.body.classList.remove('dragging');
-    window.promptForge.pushHistory();
+    window.prompt0r.pushHistory();
   }
 
   // node-pending means the finger lifted before crossing the drag threshold —

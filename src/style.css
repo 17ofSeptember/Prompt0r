@@ -1,4 +1,4 @@
-/* style.css — PromptForge dark industrial theme */
+/* style.css - Prompt0r dark industrial theme */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1082,3 +1082,129 @@ body { display: flex; flex-direction: column; }
 .custom-field-remove { margin-top: 20px; }
 .cf-extra-options { display: none; }
 .cf-extra-options.visible { display: flex; }
+
+/* ── ABOUT ────────────────────────────────────────────────────────────────── */
+
+/* Square icon-only toolbar button, so ⓘ does not sit in a wide pill. */
+.toolbar-btn-icon {
+  width: 30px;
+  padding: 0;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.about-body { text-align: center; }
+
+.about-logo {
+  font-family: var(--font-ui);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-hi);
+  margin-bottom: 2px;
+}
+
+.about-tagline {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  margin-bottom: 8px;
+}
+
+.about-version {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 18px;
+}
+
+.about-blurb {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-lo);
+  max-width: 44ch;
+  margin: 0 auto 20px;
+}
+
+.about-credit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-sub);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.about-credit-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+}
+
+.about-link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+.about-link:hover { border-bottom-color: var(--accent); }
+.about-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.about-credit .about-link {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.about-link-url {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--text-lo);
+  word-break: break-all;
+}
+.about-link-url:hover { color: var(--accent); }
+
+.about-license {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  max-width: 42ch;
+  margin: 0 auto;
+}
+
+.welcome-credit {
+  margin-top: 18px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.welcome-credit a {
+  color: var(--text-lo);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-mid);
+}
+.welcome-credit a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.welcome-credit a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* The "0" in Prompt0r. DM Sans renders zero as a plain circle, which reads as a
+   capital O; JetBrains Mono's dotted zero makes the intent unmistakable.
+   Slightly tightened tracking keeps it from floating inside the wordmark. */
+.brand-zero {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}

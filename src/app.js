@@ -1,4 +1,17 @@
-// app.js — Main application entry point
+/*
+ * Prompt0r - Visual AI Prompt Builder
+ * Copyright (C) 2026 17OfSeptember <https://github.com/17ofSeptember>
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version. It is distributed WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE. See the GNU Affero General Public License for details:
+ * <https://www.gnu.org/licenses/>.
+ */
+
+// app.js - Main application entry point
 
 import { NODE_REGISTRY, createNode, setNodeCounter } from './nodes.js';
 import {
@@ -10,9 +23,22 @@ import { exportJSON, downloadJSON } from './exporter.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
+export const APP_NAME    = 'Prompt0r';
+export const APP_VERSION = '1.0.0';
+
 const HISTORY_LIMIT   = 50;
 const AUTOSAVE_DELAY  = 800;   // ms of idle before an autosave is written
+
 const STORAGE_KEYS = {
+  session:     'prompt0r_session',
+  autosave:    'prompt0r_autosave',
+  customNodes: 'prompt0r_custom_nodes',
+  welcomed:    'prompt0r_welcomed'
+};
+
+// Keys used before the rename. Anyone who used the app as PromptForge still has
+// their work under these, so it is carried over once and the old keys dropped.
+const LEGACY_STORAGE_KEYS = {
   session:     'promptforge_session',
   autosave:    'promptforge_autosave',
   customNodes: 'promptforge_custom_nodes',
@@ -55,6 +81,16 @@ const storage = {
     try { localStorage.removeItem(key); } catch { /* nothing to do */ }
   }
 };
+
+/** One-time carry-over of pre-rename data. Never overwrites a newer value. */
+function migrateLegacyStorage() {
+  for (const [name, legacyKey] of Object.entries(LEGACY_STORAGE_KEYS)) {
+    const legacyValue = storage.get(legacyKey);
+    if (legacyValue === null) continue;
+    if (storage.get(STORAGE_KEYS[name]) === null) storage.set(STORAGE_KEYS[name], legacyValue);
+    storage.remove(legacyKey);
+  }
+}
 
 // ── Snapshots ─────────────────────────────────────────────────────────────────
 
@@ -103,7 +139,7 @@ function writeAutosave() {
   const ok = storage.set(STORAGE_KEYS.autosave, JSON.stringify(_serializeSession()));
   if (!ok && !_autosaveWarned) {
     _autosaveWarned = true;   // warn once per page load, not on every keystroke
-    window.promptForge.showToast('Autosave unavailable — browser storage is blocked or full', 'error');
+    window.prompt0r.showToast('Autosave unavailable — browser storage is blocked or full', 'error');
   }
 }
 
@@ -146,7 +182,7 @@ function _applySession(data) {
 
 // ── Shared functions namespace ────────────────────────────────────────────────
 
-window.promptForge = {
+window.prompt0r = {
   /** Commit the current state. Call *after* mutating AppState. */
   pushHistory() {
     if (_lastCommitted) {
@@ -160,31 +196,31 @@ window.promptForge = {
 
   undo() {
     if (window.AppState.history.length === 0) {
-      window.promptForge.showToast('Nothing to undo', 'info');
+      window.prompt0r.showToast('Nothing to undo', 'info');
       return;
     }
     window.AppState.futureHistory.push(_snapshot());
     const prev = window.AppState.history.pop();
     _lastCommitted = _clone(prev);
     _restore(prev);
-    window.promptForge.showToast('Undo', 'info');
+    window.prompt0r.showToast('Undo', 'info');
   },
 
   redo() {
     if (window.AppState.futureHistory.length === 0) {
-      window.promptForge.showToast('Nothing to redo', 'info');
+      window.prompt0r.showToast('Nothing to redo', 'info');
       return;
     }
     window.AppState.history.push(_snapshot());
     const next = window.AppState.futureHistory.pop();
     _lastCommitted = _clone(next);
     _restore(next);
-    window.promptForge.showToast('Redo', 'info');
+    window.prompt0r.showToast('Redo', 'info');
   },
 
   saveSession() {
     const ok = storage.set(STORAGE_KEYS.session, JSON.stringify(_serializeSession()));
-    window.promptForge.showToast(
+    window.prompt0r.showToast(
       ok ? 'Session saved' : 'Could not save — browser storage is blocked or full',
       ok ? 'success' : 'error'
     );
@@ -192,20 +228,20 @@ window.promptForge = {
 
   loadSession() {
     const raw = storage.get(STORAGE_KEYS.session);
-    if (!raw) { window.promptForge.showToast('No saved session found', 'error'); return; }
+    if (!raw) { window.prompt0r.showToast('No saved session found', 'error'); return; }
     try {
       const data = JSON.parse(raw);
       if (!data || typeof data !== 'object') throw new Error('malformed session');
       _applySession(data);
-      window.promptForge.showToast('Session loaded', 'success');
+      window.prompt0r.showToast('Session loaded', 'success');
     } catch {
-      window.promptForge.showToast('Failed to load session — the saved data is corrupt', 'error');
+      window.prompt0r.showToast('Failed to load session — the saved data is corrupt', 'error');
     }
   },
 
   exportJSON() {
     if (window.AppState.nodes.length === 0) {
-      window.promptForge.showToast('Add some nodes first!', 'error');
+      window.prompt0r.showToast('Add some nodes first!', 'error');
       return;
     }
     exportJSON();
@@ -218,8 +254,8 @@ window.promptForge = {
     window.AppState.connections = [];
     window.AppState.selectedNodeId = null;
     renderAllNodes();
-    window.promptForge.pushHistory();
-    window.promptForge.showToast('Canvas cleared', 'info');
+    window.prompt0r.pushHistory();
+    window.prompt0r.showToast('Canvas cleared', 'info');
   },
 
   showToast(message, type = 'info') {
@@ -290,12 +326,14 @@ function closeAllOverlays() {
   setAddNodeMenuOpen(false);
   closeModal(document.getElementById('export-modal'));
   closeModal(document.getElementById('custom-node-modal'));
+  closeModal(document.getElementById('about-modal'));
   _setMobileMenuOpen(false);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  migrateLegacyStorage();
   _loadCustomNodes();
 
   initCanvas();
@@ -354,8 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Surface unexpected failures instead of dying silently in the console.
   window.addEventListener('error', e => {
-    console.error('[PromptForge]', e.error || e.message);
-    window.promptForge.showToast('Something went wrong — check the console', 'error');
+    console.error(`[${APP_NAME}]`, e.error || e.message);
+    window.prompt0r.showToast('Something went wrong — check the console', 'error');
   });
 });
 
@@ -366,7 +404,7 @@ function _restoreAutosave() {
     const data = JSON.parse(raw);
     if (!data || !Array.isArray(data.nodes) || data.nodes.length === 0) return;
     _applySession(data);
-    window.promptForge.showToast(`Restored ${data.nodes.length} node${data.nodes.length === 1 ? '' : 's'} from your last session`, 'info');
+    window.prompt0r.showToast(`Restored ${data.nodes.length} node${data.nodes.length === 1 ? '' : 's'} from your last session`, 'info');
   } catch {
     // A corrupt autosave must never block startup — drop it and start clean.
     storage.remove(STORAGE_KEYS.autosave);
@@ -393,10 +431,11 @@ function _bindToolbar() {
   });
 
   document.getElementById('btn-custom-node').addEventListener('click', _openCustomNodeModal);
-  document.getElementById('btn-clear').addEventListener('click', () => window.promptForge.clearCanvas());
-  document.getElementById('btn-save').addEventListener('click',  () => window.promptForge.saveSession());
-  document.getElementById('btn-load').addEventListener('click',  () => window.promptForge.loadSession());
-  document.getElementById('btn-export').addEventListener('click', () => window.promptForge.exportJSON());
+  document.getElementById('btn-about').addEventListener('click', _openAboutModal);
+  document.getElementById('btn-clear').addEventListener('click', () => window.prompt0r.clearCanvas());
+  document.getElementById('btn-save').addEventListener('click',  () => window.prompt0r.saveSession());
+  document.getElementById('btn-load').addEventListener('click',  () => window.prompt0r.loadSession());
+  document.getElementById('btn-export').addEventListener('click', () => window.prompt0r.exportJSON());
 
   // ── Mobile More panel ─────────────────────────────────────────────────────
   const moreBtn = document.getElementById('btn-mobile-more');
@@ -416,10 +455,11 @@ function _bindToolbar() {
 
   const runAndClose = fn => () => { fn(); _setMobileMenuOpen(false); };
   document.getElementById('mob-btn-fit').addEventListener('click',    runAndClose(fitToScreen));
-  document.getElementById('mob-btn-save').addEventListener('click',   runAndClose(() => window.promptForge.saveSession()));
-  document.getElementById('mob-btn-load').addEventListener('click',   runAndClose(() => window.promptForge.loadSession()));
+  document.getElementById('mob-btn-save').addEventListener('click',   runAndClose(() => window.prompt0r.saveSession()));
+  document.getElementById('mob-btn-load').addEventListener('click',   runAndClose(() => window.prompt0r.loadSession()));
   document.getElementById('mob-btn-custom').addEventListener('click', runAndClose(_openCustomNodeModal));
-  document.getElementById('mob-btn-clear').addEventListener('click',  runAndClose(() => window.promptForge.clearCanvas()));
+  document.getElementById('mob-btn-clear').addEventListener('click',  runAndClose(() => window.prompt0r.clearCanvas()));
+  document.getElementById('mob-btn-about').addEventListener('click',  runAndClose(_openAboutModal));
 }
 
 function _zoomCenter(factor) {
@@ -451,11 +491,11 @@ function _bindKeyboard() {
 
     if (e.ctrlKey || e.metaKey) {
       // Ctrl+Shift+Z and Ctrl+Y both redo, matching the two common conventions.
-      if (e.code === 'KeyZ' && e.shiftKey) { e.preventDefault(); window.promptForge.redo(); return; }
-      if (e.code === 'KeyZ')               { e.preventDefault(); window.promptForge.undo(); return; }
-      if (e.code === 'KeyY')               { e.preventDefault(); window.promptForge.redo(); return; }
-      if (e.code === 'KeyS')               { e.preventDefault(); window.promptForge.saveSession(); return; }
-      if (e.code === 'KeyE')               { e.preventDefault(); window.promptForge.exportJSON(); return; }
+      if (e.code === 'KeyZ' && e.shiftKey) { e.preventDefault(); window.prompt0r.redo(); return; }
+      if (e.code === 'KeyZ')               { e.preventDefault(); window.prompt0r.undo(); return; }
+      if (e.code === 'KeyY')               { e.preventDefault(); window.prompt0r.redo(); return; }
+      if (e.code === 'KeyS')               { e.preventDefault(); window.prompt0r.saveSession(); return; }
+      if (e.code === 'KeyE')               { e.preventDefault(); window.prompt0r.exportJSON(); return; }
     }
 
     if (inInput) return;
@@ -472,9 +512,21 @@ function _bindKeyboard() {
 
 // ── Modals ────────────────────────────────────────────────────────────────────
 
+function _openAboutModal() {
+  openModal(document.getElementById('about-modal'));
+}
+
 function _bindModals() {
   const exportModal = document.getElementById('export-modal');
   const customModal = document.getElementById('custom-node-modal');
+  const aboutModal  = document.getElementById('about-modal');
+
+  // Single source of truth for the version shown in the About dialog.
+  const versionEl = document.getElementById('about-version');
+  if (versionEl) versionEl.textContent = APP_VERSION;
+
+  document.getElementById('btn-close-about').addEventListener('click', () => closeModal(aboutModal));
+  aboutModal.addEventListener('click', e => { if (e.target === aboutModal) closeModal(aboutModal); });
 
   document.getElementById('btn-close-export').addEventListener('click', () => closeModal(exportModal));
   exportModal.addEventListener('click', e => { if (e.target === exportModal) closeModal(exportModal); });
@@ -487,20 +539,20 @@ function _bindModals() {
     const text = JSON.stringify(window._lastExportData, null, 2);
     try {
       await navigator.clipboard.writeText(text);
-      window.promptForge.showToast('Copied to clipboard!', 'success');
+      window.prompt0r.showToast('Copied to clipboard!', 'success');
     } catch {
       // navigator.clipboard is unavailable on insecure origins and in some
       // embedded webviews — fall back to the legacy selection copy.
-      if (_legacyCopy(text)) window.promptForge.showToast('Copied to clipboard!', 'success');
-      else window.promptForge.showToast('Copy failed — select the JSON and copy manually', 'error');
+      if (_legacyCopy(text)) window.prompt0r.showToast('Copied to clipboard!', 'success');
+      else window.prompt0r.showToast('Copy failed — select the JSON and copy manually', 'error');
     }
   });
 
   document.getElementById('btn-download-json').addEventListener('click', () => {
     if (!window._lastExportData) return;
     const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    downloadJSON(window._lastExportData, `promptforge_${ts}.json`);
-    window.promptForge.showToast('Downloading JSON…', 'success');
+    downloadJSON(window._lastExportData, `prompt0r_${ts}.json`);
+    window.prompt0r.showToast('Downloading JSON…', 'success');
   });
 }
 
@@ -584,7 +636,7 @@ function _addCustomField() {
 
   item.querySelector('.custom-field-remove').addEventListener('click', () => {
     if (list.children.length === 1) {
-      window.promptForge.showToast('A node needs at least one field', 'error');
+      window.prompt0r.showToast('A node needs at least one field', 'error');
       return;
     }
     item.remove();
@@ -604,7 +656,7 @@ function _saveCustomNode() {
   const desc = document.getElementById('custom-node-desc').value.trim();
 
   if (!name) {
-    window.promptForge.showToast('Please enter a node name', 'error');
+    window.prompt0r.showToast('Please enter a node name', 'error');
     document.getElementById('custom-node-name').focus();
     return;
   }
@@ -654,7 +706,7 @@ function _saveCustomNode() {
     fields.push(field);
   });
 
-  if (fields.length === 0) { window.promptForge.showToast('Add at least one field', 'error'); return; }
+  if (fields.length === 0) { window.prompt0r.showToast('Add at least one field', 'error'); return; }
 
   const id = String(Date.now());
   const customDef = { id, name, icon, description: desc, category: 'custom', fields };
@@ -665,7 +717,7 @@ function _saveCustomNode() {
 
   closeModal(document.getElementById('custom-node-modal'));
   buildAddNodeMenu();
-  window.promptForge.showToast(`Custom node "${name}" created`, 'success');
+  window.prompt0r.showToast(`Custom node "${name}" created`, 'success');
 }
 
 function _loadCustomNodes() {
@@ -683,5 +735,5 @@ function _loadCustomNodes() {
 
 function _saveCustomNodes() {
   const ok = storage.set(STORAGE_KEYS.customNodes, JSON.stringify(window.AppState.customNodes));
-  if (!ok) window.promptForge.showToast('Custom node saved for this session only — storage is blocked or full', 'error');
+  if (!ok) window.prompt0r.showToast('Custom node saved for this session only — storage is blocked or full', 'error');
 }
