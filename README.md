@@ -25,6 +25,9 @@ Prompt0r splits the prompt into **nodes**. Each node controls exactly one aspect
 image. You place the nodes you care about on a canvas, fill them in, and Prompt0r assembles
 them into a single well ordered prompt string plus a structured JSON document.
 
+<img width="1906" height="934" alt="image" src="https://github.com/user-attachments/assets/14a6167d-1c21-49f9-b8c4-0fff82f5c0e7" />
+
+
 **Highlights**
 
 * **31 built-in node types** across six categories: Subject, Lighting, Color and Mood,
