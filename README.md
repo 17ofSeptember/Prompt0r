@@ -27,6 +27,11 @@ them into a single well ordered prompt string plus a structured JSON document.
 
 <img width="1906" height="934" alt="image" src="https://github.com/user-attachments/assets/14a6167d-1c21-49f9-b8c4-0fff82f5c0e7" />
 
+Export -> Gemini 
+
+<img width="448" height="532" alt="image" src="https://github.com/user-attachments/assets/4f055d37-2f4d-43f3-8a07-37ca4120c5d5" />
+
+
 
 **Highlights**
 
