@@ -4,6 +4,9 @@
 
 **Visual AI Prompt Builder**
 
+<img width="677" height="369" alt="image" src="https://github.com/user-attachments/assets/54ad1584-7f4f-4e34-817c-86ae7f50630d" />
+
+
 Build rich, structured image generation prompts on a node canvas, then export them as JSON for any AI image generator.
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
